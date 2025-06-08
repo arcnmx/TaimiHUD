@@ -81,7 +81,7 @@ impl RenderBackend {
         //let device_context = unsafe { device.GetImmediateContext().expect("I lost my context!") };
 
         /*
-        let path = addon_dir.join("QuitarHero_Hero-Timers/timers/Assets/Raids/Deimos.png");
+        let path = addon_dir.join("kittywitch_Hero-Timers/timers/Assets/Raids/Deimos.png");
         if let Ok(quad) = Entity::quad(&device, &shaders, Some(&path)) {
             entities.push(quad);
         }

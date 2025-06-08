@@ -20,7 +20,7 @@ pkgs.callPackage
       pkg-config
   ];
 
-  LD_LIBRARY_PATH="${lib.makeLibraryPath [buildPackages.buildPackages.libgit2]}";
+  #LD_LIBRARY_PATH="${lib.makeLibraryPath [buildPackages.buildPackages.libgit2]}";
     nativeBuildInputs = [
       buildPackages.stdenv.cc
       libgit2
@@ -28,16 +28,16 @@ pkgs.callPackage
         (fenix'.complete.withComponents [
           "cargo"
           "rust-src"
-          "clippy"
+          #"clippy"
           "rustc"
         ])
         fenix'.rust-analyzer
-        fenix'.latest.rustfmt
+        #fenix'.latest.rustfmt
         fenix'.targets.x86_64-pc-windows-gnu.latest.rust-std
       ])
     ];
 
-    LIBGIT2_NO_VENDOR=1;
+    LIBGIT2_NO_VENDOR = if lib.versionAtLeast libgit2.version "1.9.0" then true else null;
     CARGO_BUILD_TARGET = "x86_64-pc-windows-gnu";
     TARGET_CC = "${stdenv.cc.targetPrefix}cc";
     CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER = TARGET_CC;
