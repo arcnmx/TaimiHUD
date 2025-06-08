@@ -41,11 +41,12 @@
 
         taimiHUD = pkgs.callPackage ./package.nix {
           craneLib = packageCraneLib;
+          features = [ "built" ];
         };
 
         taimiHUDSpace = pkgs.callPackage ./package.nix {
           craneLib = packageCraneLib;
-          features = [ "space" ];
+          features = [ "built" "space" ];
         };
 
         # TaimiHUD devShell

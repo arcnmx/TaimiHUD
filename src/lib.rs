@@ -119,7 +119,17 @@ pub fn localizer() -> DefaultLocalizer<'static> {
 }
 
 pub mod built_info {
+    #[cfg(feature = "built")]
     include!(concat!(env!("OUT_DIR"), "/built.rs"));
+
+    #[cfg(not(feature = "built"))]
+    pub const GIT_VERSION: Option<&'static str> = None;
+    #[cfg(not(feature = "built"))]
+    pub const CI_PLATFORM: Option<&'static str> = None;
+    #[cfg(not(feature = "built"))]
+    pub const GIT_HEAD_REF: Option<&'static str> = Some("some dirty");
+    #[cfg(not(feature = "built"))]
+    pub const GIT_COMMIT_HASH_SHORT: Option<&'static str> = Some("HEAD");
 }
 
 static TEXTURES: LazyLock<rt::TextureLoader> = LazyLock::new(|| rt::TextureLoader::new());

@@ -1,4 +1,4 @@
-{ lib, buildPackages, craneLib, stdenv, windows, libgit2, pkg-config, features ? []}:
+{ lib, buildPackages, craneLib, stdenv, windows, libgit2, pkg-config, features ? ["built"]}:
 
 craneLib.buildPackage rec {
   src = ./.;
