@@ -2,7 +2,7 @@ use {
     anyhow::{anyhow, Context},
     crate::space::max_depth,
     windows::{
-        core::Interface,
+        core::{Interface, InterfaceRef},
         Win32::Graphics::Direct3D11::{
             ID3D11DepthStencilState, ID3D11DepthStencilView, ID3D11Device, ID3D11DeviceContext,
             ID3D11RasterizerState, ID3D11RenderTargetView, ID3D11Texture2D,
@@ -64,7 +64,8 @@ impl DepthHandler {
         })
     }
 
-    pub fn setup(&self, device_context: &ID3D11DeviceContext) {
+    pub fn setup<'a>(&'a self, device_context: &'a ID3D11DeviceContext) -> RestoreToken<'a> {
+        let restore = RestoreToken::new_snapshot(device_context.to_ref());
         let (dsview, clear_depth) = (&self.depth_stencil_view, Some(1.0f32));
         #[cfg(feature = "goggles")]
         let (dsview, clear_depth) = match goggles::current_lens() {
@@ -104,6 +105,7 @@ impl DepthHandler {
                 );
             }
         }
+        restore
     }
 
     pub fn create_viewport(display_size: &[f32; 2]) -> D3D11_VIEWPORT {
@@ -267,5 +269,22 @@ impl DepthHandler {
         .and_then(|()| rasterizer_state_ptr.ok_or_else(|| anyhow!("no rasterizer state")))?;
         log::info!("Set up rasterizer state");
         Ok(rasterizer_state)
+    }
+}
+
+pub struct RestoreToken<'c> {
+    pub context: InterfaceRef<'c, ID3D11DeviceContext>,
+}
+
+impl<'c> RestoreToken<'c> {
+    pub fn new_snapshot(context: InterfaceRef<'c, ID3D11DeviceContext>) -> Self {
+        Self {
+            context,
+        }
+    }
+}
+
+impl<'c> Drop for RestoreToken<'c> {
+    fn drop(&mut self) {
     }
 }
