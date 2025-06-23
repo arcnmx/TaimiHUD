@@ -688,6 +688,19 @@ impl MarkerInputData {
                 sign_obtainer,
                 ..*mdata
             }));
+            #[cfg(feature = "goggles")] { Self::update_depth_scale(); }
+        }
+    }
+
+    #[cfg(feature = "goggles")]
+    pub fn update_depth_scale() {
+        use crate::space;
+        #[cfg(todo)]
+        if let Some(data) = Self::read() {
+            let sign = data.sign_obtainer.sign().abs();
+            let sign = (sign.x + sign.y) / 2.0;
+            space::set_min_depth(space::min_depth_from_scale(sign));
+            space::set_max_depth(space::max_depth_from_scale(sign));
         }
     }
 
@@ -701,6 +714,7 @@ impl MarkerInputData {
                 ..*mdata
             }));
         }
+        #[cfg(feature = "goggles")] { Self::update_depth_scale(); }
     }
 
     pub fn from_tick(
@@ -733,6 +747,7 @@ impl MarkerInputData {
                 ndata.global_player_pos.into(),
             );
             data.store(Arc::new(ndata));
+            #[cfg(feature = "goggles")] { Self::update_depth_scale(); }
         }
     }
 }
