@@ -208,3 +208,154 @@ pub const fn nexus_log_level(level: Level) -> NexusLogLevel {
         Level::Error => NexusLogLevel::Critical,
     }
 }
+
+#[cfg(todo)]
+pub const DEFAULT_LEVEL: Level = Level::Info;
+
+#[cfg(feature = "extension-nexus")]
+pub struct TaimiLogNexus;
+
+#[cfg(todo)]
+#[cfg(feature = "extension-nexus")]
+impl CLogApi for TaimiLogNexus {
+    type CLogError = Infallible;
+
+    fn log_c(&mut self, message: &CStrRef) -> Result<(), Self::CLogError> {
+        if exports::nexus::available() {
+            unsafe {
+                nexus::AddonApi::get().log(DEFAULT_LEVEL, rt::NAME_C.as_ptr(), message.as_ptr());
+            }
+        }
+
+        Ok(())
+    }
+}
+
+#[cfg(todo)]
+#[cfg(feature = "extension-nexus")]
+impl CLog for TaimiLogNexus {
+    fn log_record(&mut self, record: &Record) -> Result<(), Self::CLogError> {
+        use core::fmt::Write;
+
+        let mut line = String::new();
+        if record.target().as_bytes() != rt::NAME_C.to_bytes() {
+            let postfix = match record.module_path() {
+                #[cfg(debug_assertions)]
+                Some(..) => "::",
+                None => "",
+            };
+            let _ = write!(&mut line, "{}{}", record.target(), postfix);
+        }
+        #[cfg(debug_assertions)]
+        if let Some(module) = record.module_path() {
+            let _ = write!(&mut line, "{module}");
+        }
+        #[cfg(debug_assertions)]
+        if let Some(l) = record.line() {
+            let _ = write!(&mut line, ":{l}");
+        }
+        let prefix = match line.is_empty() {
+            false => "; ",
+            true => "",
+        };
+        let _ = write!(&mut line, "{}{}", prefix, record.args());
+
+        let line = unsafe{
+            CString::from_vec_unchecked(line.into_bytes())
+        };
+
+        let level = nexus_log_level(record.level());
+
+        unsafe {
+            (nexus::AddonApi::get().log)(level, rt::NAME_C.as_ptr(), line.as_ptr());
+        }
+
+        Ok(())
+    }
+}
+
+#[cfg(todo)]
+impl CLogApi for TaimiLog {
+    type CLogError = Infallible;
+
+    fn log_c(&mut self, message: &CStrRef) -> Result<(), Self::CLogError> {
+        #[cfg(feature = "extension-nexus")]
+        if exports::nexus::available() {
+            TaimiLogNexus.log_c(message)?;
+        }
+
+        #[cfg(feature = "extension-arcdps")]
+        if exports::arcdps::available() {
+            match () {
+                #[cfg(feature = "extension-arcdps-extern")]
+                () => if let Some(arc) = exports::arcdps::r#extern::arc_args() {
+                    let mut log = &arc.module;
+                    let _ = log.log_c(message);
+                },
+                #[cfg(feature = "extension-arcdps-codegen")]
+                () => unsafe {
+                    if arcdps::exports::has_e3_log_file() {
+                        arcdps::exports::raw::e3_log_file(message.as_ptr());
+                    }
+
+                    if arcdps::exports::has_e8_log_window() {
+                        arcdps::exports::raw::e8_log_window(message.as_ptr());
+                    }
+                },
+            }
+        }
+
+        Ok(())
+    }
+}
+
+#[cfg(todo)]
+impl CLog for &'_ TaimiLog {
+    fn log_record(&mut self, record: &Record) -> Result<(), Self::CLogError> {
+        #[cfg(feature = "extension-nexus")]
+        if exports::nexus::available() {
+            TaimiLogNexus.log_record(record)?;
+        }
+        #[cfg(feature = "extension-arcdps")]
+        if exports::arcdps::available() {
+            match () {
+                #[cfg(feature = "extension-arcdps-extern")]
+                () => if let Some(arc) = exports::arcdps::r#extern::arc_args() {
+                    let mut log = &arc.module;
+                    let _ = log.log_record(record);
+                },
+                #[cfg(feature = "extension-arcdps-codegen")]
+                () => unsafe {
+                    use arcffi::log::clog::record_to_cstring;
+
+                    let line = record_to_cstring(record);
+                    if arcdps::exports::has_e3_log_file() {
+                        arcdps::exports::raw::e3_log_file(line.as_ptr());
+                    }
+
+                    // TODO: filter out debug/trace maybe?
+                    if arcdps::exports::has_e8_log_window() {
+                        arcdps::exports::raw::e8_log_window(line.as_ptr());
+                    }
+                },
+            }
+        }
+
+        Ok(())
+    }
+}
+
+#[cfg(todo)]
+impl Log for TaimiLog {
+    fn enabled(&self, metadata: &Metadata) -> bool {
+        true
+    }
+
+    fn log(&self, record: &Record) {
+        let mut log = self;
+        let _ = log.log_record(record);
+    }
+
+    fn flush(&self) {
+    }
+}
