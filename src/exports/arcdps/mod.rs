@@ -45,7 +45,7 @@ pub const SIG: u32 = exports::SIG as u32;
 
 pub fn gh_repo_src() -> GitHubSource {
     GitHubSource {
-        owner: "TaimiHUD".into(),
+        owner: "arcnmx".into(),
         repository: "TaimiHUD".into(),
         description: None,
     }
@@ -329,8 +329,8 @@ fn update_url() -> Option<String> {
                 _ => true,
             };
             if release.prerelease {
-                log::info!("Skipping update to pre-release");
-                return None
+                //log::info!("Skipping update to pre-release");
+                //return None
             } else if is_dev_build {
                 log::info!("Refusing to update development build");
                 return None
