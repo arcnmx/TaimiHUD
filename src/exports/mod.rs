@@ -9,7 +9,7 @@ pub mod runtime;
 #[macro_export]
 macro_rules! gh_repo_url {
     () => {
-        "https://github.com/TaimiHUD/TaimiHUD"
+        "https://github.com/arcnmx/TaimiHUD"
     };
 }
 pub use gh_repo_url;
