@@ -200,7 +200,15 @@ pub mod built_info {
     include!("./built.rs");
 
     pub const IS_TAGGED_VERSION: bool = check_is_release();
-    pub const IS_TAGGED_RELEASE: bool = check_is_plain_release();
+    pub const IS_TAGGED_RELEASE_OR_RC: bool = match option_env!("ADDON_VERSION_RELEASE") {
+        Some(r) if r.len() == 0 => false,
+        None => false,
+        Some(..) => true,
+    };
+    pub const IS_TAGGED_RELEASE: bool = match option_env!("ADDON_VERSION_RELEASE") {
+        Some(r) if r.len() == 1 && r.as_bytes()[0] == b'1' => true,
+        _ => false,
+    };
 
     /// Official tagged release build
     pub fn is_release() -> bool {
@@ -259,14 +267,6 @@ pub mod built_info {
             true => true,
         }
     }
-    const fn check_is_plain_release() -> bool {
-        let head = match GIT_HEAD_REF {
-            Some(head) if head.len() >= GIT_REF_RELEASE_PREFIX.len() => head.as_bytes(),
-            _ => return false,
-        };
-        check_is_release() &&
-            has_prefix(crate::exports::runtime::CRATE_VERSION.as_bytes(), 0, head, GIT_REF_RELEASE_PREFIX.len())
-    }
     const fn has_prefix(s: &[u8], off: usize, prefix: &[u8], poff: usize) -> bool {
         if s.len() <= off || prefix.len() < poff {
             return false
@@ -295,15 +295,16 @@ static SPACE_SENDER: RwLock<Option<Sender<SpaceEvent>>> = RwLock::new(None);
 
 static CONTROLLER_THREAD: Mutex<Option<JoinHandle<()>>> = Mutex::new(None);
 
-#[cfg(feature = "extension-nexus")]
+#[cfg(feature = "extension-nexus-codegen")]
 nexus::export! {
     name: exports::addon_title!(),
     signature: exports::nexus::SIG,
     load: exports::nexus::cb_load,
     unload: exports::nexus::cb_unload,
     flags: AddonFlags::None,
-    provider: if built_info::IS_TAGGED_RELEASE { UpdateProvider::GitHub } else { UpdateProvider::Manual },
+    provider: if built_info::IS_TAGGED_RELEASE_OR_RC { UpdateProvider::GitHub } else { UpdateProvider::Manual },
     update_link: exports::gh_repo_url!(),
+    // TODO: author: env!("ADDON_AUTHOR")
 }
 
 #[cfg(feature = "extension-arcdps-codegen")]
