@@ -64,7 +64,7 @@ pub fn crate_channel() -> Option<&'static str> {
 }
 
 pub static GH_REPO_SRC: LazyLock<GitHubSource> = LazyLock::new(|| GitHubSource {
-    owner: "TaimiHUD".into(),
+    owner: "arcnmx".into(),
     repository: "TaimiHUD".into(),
     description: None,
 });
